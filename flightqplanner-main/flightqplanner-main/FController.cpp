@@ -1,13 +1,17 @@
 #include "FController.h"
-#include <iomanip>
 #include <iostream>
 #include <chrono>
 #include <cmath>
-#include <map>
 #include <thread>
 #include <vector>
+#include <string>
+
+#include <QSerialPort>
+#include <QDebug>
 
 #include <mavsdk/plugins/mission/mission.hpp>
+
+
 
 using namespace mavsdk;
 using namespace std::chrono_literals;
@@ -37,22 +41,20 @@ FController::~FController()
 
 
 
-
-
-
 //INITILIZE ETC.-----------------------------------------------------------------------------
 
-bool FController::connect() {
+bool FController::connect(const std::string& selectedPort) {
 
     std::string connection_url = "";
+    m_isSim = false; // Chore: Add Simulation Controller
     if(m_isSim){
         connection_url = "udp://:14550";
     }else{
-        connection_url = "serial:///dev/ttyUSB0:57600";
+        connection_url = "serial://" + selectedPort + ":57600";
     }
 
     // 1. Bağlantıyı kur
-    auto connection_result = m_mavsdk->add_any_connection("serial:///dev/cu.usbserial-D30K1O7S:57600");
+    auto connection_result = m_mavsdk->add_any_connection("connection_url");
     if (connection_result != ConnectionResult::Success) {
         std::cerr << "Bağlantı hatası: " << connection_result << std::endl;
         return false;

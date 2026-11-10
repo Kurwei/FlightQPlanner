@@ -3,6 +3,9 @@
 
 #include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
+#include <QComboBox>
+#include <QSerialPortInfo>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->setHomePushButton, &QPushButton::clicked, this, &MainWindow::setHomeClicked);
     connect(ui->testMotorButton, &QPushButton::clicked, this, &MainWindow::testMotorClicked);
     connect(ui->testAllMotorsButton, &QPushButton::clicked, this, &MainWindow::testAllMotorsClicked);
-
+    connect(ui->portConnectButton, &QPushButton::clicked, this, &MainWindow::on_btnConnect_clicked);
+    connect(ui->portRefreshButton, &QPushButton::clicked, this, &MainWindow::refreshPortList);
 
 
 
@@ -31,8 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_controller, &FController::sgn_pushGPSInfo, this, &MainWindow::updateGPSInfo);
     connect(m_controller, &FController::sgn_pushYPR, this, &MainWindow::updateYPR);
 
-
-    m_controller->connect();
+    std::string selectedPort = ui->portComboBox->currentData().toString().toStdString();
+    m_controller->connect(selectedPort);
 
 }
 
@@ -116,7 +120,7 @@ void MainWindow::execute2WPMissionClicked()
 
     //m_controller->execute2WPMissionFromCurrentGPS(targetLat, targetLong, targetRelAlt, speed);
 
-    QtConcurrent::run(std::bind(&FController::execute2WPMissionFromCurrentGPS,
+    std::ignore = QtConcurrent::run(std::bind(&FController::execute2WPMissionFromCurrentGPS,
                                 m_controller,
                                 targetLat,
                                 targetLong,
@@ -143,7 +147,7 @@ void MainWindow::executeVelocityOffboardClicked()
 
     QApplication::processEvents();
 
-    QtConcurrent::run(std::bind(&FController::goToGPSPointWithVelocity,
+    std::ignore = QtConcurrent::run(std::bind(&FController::goToGPSPointWithVelocity,
                                 m_controller,
                                 targetLat,
                                 targetLong,
@@ -246,5 +250,39 @@ void MainWindow::updateYPR(double y, double p, double r)
 
 }
 
+void MainWindow::on_btnConnect_clicked() {
+   // m_controller->setSim(false); // Chore: Add Sim Controlling
+
+   QString selectedPath = ui->portComboBox->currentData().toString();
+
+   if (selectedPath.isEmpty()) {
+       qWarning() << "No valid serial ports selected";
+       return;
+   }
+
+   std::string portString = selectedPath.toStdString();
+   bool connected = m_controller->connect(portString);
+   if(connected) {
+       qDebug() << "Connected to: " << QString::fromStdString(portString);
+   }
+}
+
+void MainWindow::refreshPortList() {
+    ui->portComboBox->clear();
+
+    const auto ports = QSerialPortInfo::availablePorts();
+
+    if (ports.isEmpty()) {
+        ui->portComboBox->addItem("No Serial Ports Found", "");
+        return;
+    }
+
+    for (const QSerialPortInfo &port : ports) {
+        QString description = port.description().isEmpty() ? "Serial Device" : port.description();
+        QString label = QString("%1 (%2)").arg(description, port.portName());
+
+        ui->portComboBox->addItem(label, port.systemLocation());
+    }
+}
 
 

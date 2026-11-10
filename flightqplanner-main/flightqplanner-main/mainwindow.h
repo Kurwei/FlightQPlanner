@@ -40,6 +40,7 @@ private slots:
     void updateGPSData(double lat, double log, double absAlt, double relAlt);
     void updateGPSInfo(int satCnt);
     void updateYPR(double y, double p, double r);
-
+    void on_btnConnect_clicked();
+    void refreshPortList();
 };
 #endif // MAINWINDOW_H
