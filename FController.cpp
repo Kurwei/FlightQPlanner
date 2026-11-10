@@ -54,7 +54,7 @@ bool FController::connect(const std::string& selectedPort) {
     }
 
     // 1. Bağlantıyı kur
-    auto connection_result = m_mavsdk->add_any_connection("connection_url");
+    auto connection_result = m_mavsdk->add_any_connection(connection_url);
     if (connection_result != ConnectionResult::Success) {
         std::cerr << "Bağlantı hatası: " << connection_result << std::endl;
         return false;
@@ -546,6 +546,9 @@ void FController::goToGPSPointWithVelocity(double targetLat, double targetLong, 
 
         // Normalize yön vektörü
         double norm = std::sqrt(dNorth * dNorth + dEast * dEast + dUp * dUp);
+        if (norm < 1e-6) {
+            break; // Target already reached, avoid division by zero
+        }
         double vn = (dNorth / norm) * final_speed;
         double ve = (dEast / norm) * final_speed;
         double vd = -(dUp / norm) * final_speed;
