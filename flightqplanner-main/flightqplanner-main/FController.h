@@ -1,7 +1,6 @@
 #ifndef FCONTROLLER_H
 #define FCONTROLLER_H
 
-#include <chrono>
 #include <mavsdk/mavsdk.hpp>
 #include <mavsdk/plugins/action/action.hpp>
 #include <mavsdk/plugins/telemetry/telemetry.hpp>
@@ -19,8 +18,6 @@
 #include <thread>
 
 #include <QObject>
-
-
 
 class TelemData{
 public:
@@ -42,7 +39,7 @@ public:
     explicit FController(bool isSimulation);
     ~FController();
 
-    bool connect();
+    bool connect(const std::string& selectedPort);
 
     bool armIfNeeded();
     bool isArmed();
